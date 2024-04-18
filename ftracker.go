@@ -1,7 +1,6 @@
 package ftracker
 
 import (
-	"errors"
 	"fmt"
 	"math"
 )
@@ -55,10 +54,7 @@ func ShowTrainingInfo(action int, trainingType string, duration, weight, height 
 	case trainingType == "Ходьба":
 		distance := distance(action)
 		speed := meanSpeed(action, duration)
-		calories, err := WalkingSpentCalories(action, duration, weight, height)
-		if err != nil {
-			return fmt.Sprintf("Тип тренировки: %s\nДлительность: %.2f ч.\nДистанция: %.2f км.\nСкорость: %.2f км/ч\nОшибка при расчете калорий: %v\n", trainingType, duration, distance, speed, err)
-		}
+		calories := WalkingSpentCalories(action, duration, weight, height)
 		return fmt.Sprintf("Тип тренировки: %s\nДлительность: %.2f ч.\nДистанция: %.2f км.\nСкорость: %.2f км/ч\nСожгли калорий: %.2f\n", trainingType, duration, distance, speed, calories)
 	case trainingType == "Плавание":
 		distance := distance(action)
@@ -101,13 +97,13 @@ const (
 // duration float64 — длительность тренировки в часах.
 // weight float64 — вес пользователя.
 // height float64 — рост пользователя.
-func WalkingSpentCalories(action int, duration, weight, height float64) (float64, error) {
+func WalkingSpentCalories(action int, duration, weight, height float64) float64 {
 	meanSpeed := meanSpeed(action, duration) * kmhInMsec
 	heightInCm := height / cmInM
 	if heightInCm == 0 {
-		return 0, errors.New("Рост должен быть больше нуля")
+		return 0
 	}
-	return ((walkingCaloriesWeightMultiplier*weight + (math.Pow(meanSpeed, 2)/heightInCm)*walkingSpeedHeightMultiplier*weight) * duration * minInH), nil
+	return ((walkingCaloriesWeightMultiplier*weight + (math.Pow(meanSpeed, 2)/heightInCm)*walkingSpeedHeightMultiplier*weight) * duration * minInH)
 }
 
 // Константы для расчета калорий, расходуемых при плавании.
@@ -127,7 +123,7 @@ func swimmingMeanSpeed(lengthPool, countPool int, duration float64) float64 {
 	if duration == 0 {
 		return 0
 	}
-	return float64(lengthPool) * float64(countPool) / float64(mInKm) / duration
+	return float64(lengthPool) * float64(countPool) / mInKm / duration
 }
 
 // SwimmingSpentCalories возвращает количество потраченных калорий при плавании.
